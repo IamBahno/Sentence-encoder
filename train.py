@@ -37,9 +37,9 @@ def train():
     val_loader = DataLoader(dataset["dev"], batch_size=cfg["training"]["batch_size"], shuffle=False, collate_fn=partial(nli_collate_fn,tokenizer=tokenizer),drop_last=True)
    
     if cfg["dataset"]["subset"] == "triplet":
-        model = BertSentenceEmbedder(pooling="mean").to(device)
+        model = BertSentenceEmbedder(pooling=cfg["embedder"]["pooling"]).to(device)
     elif cfg ["dataset"]["subset"] == "pair-class":
-        model = PairClassNLI(BertSentenceEmbedder(pooling="mean"), SimpleClassifier(input_dim=3*768, output_dim=3)).to(device) 
+        model = PairClassNLI(BertSentenceEmbedder(pooling=cfg["embedder"]["pooling"]), SimpleClassifier(input_dim=3*768, output_dim=3)).to(device) 
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=float(cfg["training"]["learning_rate"]))
     

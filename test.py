@@ -1,12 +1,17 @@
+import os
 import torch
 import numpy as np
 import mteb
+import yaml
+
+with open("config.yaml") as f:
+    cfg = yaml.safe_load(f)
 
 from mteb.types import PromptType,BatchedInput
 from mteb.abstasks.task_metadata import TaskMetadata
 from transformers import BertTokenizer
 
-from models import BertSentenceEmbedder
+from models import BertSentenceEmbedder, SimpleClassifier, PairClassNLI
 
 # MTEB expects model with 'encode' method, that takes in list of sentences, and returns numpy embeddings
 class BenchmarkEncoder:
@@ -54,10 +59,8 @@ class BenchmarkEncoder:
 
 
 if __name__ == "__main__":
-
-    model = BertSentenceEmbedder(pooling="mean")
-    model_name = "triplet_max_pooling_bert"
-    model_path = "runs\\triplet_max_pooling_bert\\last_model.pt"
+    model = BertSentenceEmbedder(pooling=cfg["embedder"]["pooling"])
+    model_path = os.path.join("runs", cfg["run_name"], "last_model.pt")
     model.load_state_dict(torch.load(model_path,weights_only=True))
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
     
@@ -69,4 +72,4 @@ if __name__ == "__main__":
     # tasks = mteb.get_tasks(task_types=["Clustering", "Classification","STS",],languages=['eng'])
     tasks = mteb.get_tasks(task_types=['STS'],languages=['eng'])
     evaluation = mteb.MTEB(tasks=tasks)
-    results = evaluation.run(wrapped, output_folder=model_name)
+    results = evaluation.run(wrapped, output_folder=cfg["run_name"])

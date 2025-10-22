@@ -60,12 +60,16 @@ class Trainer:
             # --- checkpoint saving ---
             if val_loss < self.best_val_loss:
                 self.best_val_loss = val_loss
-                best_path = f"{self.target_folder}/best_model.pt"
-                torch.save(self.model.state_dict(), best_path)
+                best_path_embedder = f"{self.target_folder}/best_model.pt"
+                best_path_whole_model = f"{self.target_folder}/best_whole_model.pt"
+                torch.save(self.model.embedder.state_dict(), best_path_embedder)
+                torch.save(self.model.state_dict(), best_path_whole_model)
                 print(f"Saved best model (val loss {self.best_val_loss:.4f})")
 
-        last_path = f"{self.target_folder}/last_model.pt"
-        torch.save(self.model.state_dict(), last_path)
+        last_path_embedder = f"{self.target_folder}/last_model.pt"
+        last_path_whole_model = f"{self.target_folder}/last_model_whole_model.pt"
+        torch.save(self.model.embedder.state_dict(), last_path_embedder)
+        torch.save(self.model.state_dict(), last_path_whole_model)
         print(f"Saved last model (val loss {val_loss:.4f})")
 
         plot_losses(train_losses, val_losses, save_dir=self.target_folder)
