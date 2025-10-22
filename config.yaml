@@ -1,0 +1,10 @@
+run_name: "pair-class_mean_pooling_bert" # "triplet_max_pooling_bert"
+
+dataset:
+  name: "sentence-transformers/all-nli"
+  subset: "pair-class" # "triplet"
+
+training:
+  batch_size: 8
+  learning_rate: 2e-5
+  epochs: 10

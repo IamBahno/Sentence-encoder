@@ -6,7 +6,7 @@ from mteb.types import PromptType,BatchedInput
 from mteb.abstasks.task_metadata import TaskMetadata
 from transformers import BertTokenizer
 
-from model import BertSentenceEmbedder
+from models import BertSentenceEmbedder
 
 # MTEB expects model with 'encode' method, that takes in list of sentences, and returns numpy embeddings
 class BenchmarkEncoder:
