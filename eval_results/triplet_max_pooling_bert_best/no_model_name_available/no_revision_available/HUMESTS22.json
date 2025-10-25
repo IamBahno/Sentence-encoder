@@ -1,0 +1,26 @@
+{
+  "dataset_revision": "ab40ed76c4283318b7b146aff31f8cdefd6ebae0",
+  "task_name": "HUMESTS22",
+  "mteb_version": "2.1.0",
+  "scores": {
+    "test": [
+      {
+        "pearson": 0.480334,
+        "spearman": 0.723391,
+        "cosine_pearson": 0.480335,
+        "cosine_spearman": 0.723391,
+        "manhattan_pearson": 0.598311,
+        "manhattan_spearman": 0.726841,
+        "euclidean_pearson": 0.610928,
+        "euclidean_spearman": 0.728681,
+        "main_score": 0.723391,
+        "hf_subset": "en",
+        "languages": [
+          "eng-Latn"
+        ]
+      }
+    ]
+  },
+  "evaluation_time": 2.157156229019165,
+  "kg_co2_emissions": null
+}
