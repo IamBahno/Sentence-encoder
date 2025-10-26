@@ -1,8 +1,12 @@
+train_objective: "mnr" # "mnr", "pair-class", "triplet"
 run_name: "pair-class_mean_pooling_bert" # "triplet_max_pooling_bert"
 
-dataset:
-  name: "sentence-transformers/all-nli"
-  subset: "pair-class" # "triplet"
+datasets:
+  mnli:
+    name: "LysandreJik/glue-mnli-train"
+  all-nli:
+    name: "sentence-transformers/all-nli"
+    subset: "pair-class" # "triplet"
 
 training:
   batch_size: 8
