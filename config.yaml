@@ -1,5 +1,5 @@
 train_objective: "mnr" # "mnr", "pair-class", "triplet"
-run_name: "pair-class_mean_pooling_bert" # "triplet_max_pooling_bert"
+run_name: "mnr_attentiv_last" # "triplet_max_pooling_bert"
 
 datasets:
   mnli:
@@ -14,4 +14,9 @@ training:
   epochs: 10
 
 embedder:
-  pooling: "mean" # "max"
+  pooling: "attention_last_layer" # "mean", "max" , "attention_last_layer", "attention_multi_layer"
+
+
+# Usedif there is attention pooling
+heads: 8
+queries_per_head: 32

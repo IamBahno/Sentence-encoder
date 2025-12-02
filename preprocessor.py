@@ -9,9 +9,8 @@ class SnliMnliPreprocessor:
     removes uncertain or invalid labels (where label = -1), 
     and keeps only positive (entailment) pairs.
     """
-    def __init__(self, config_path="config.yaml"):
-        with open(config_path) as f:
-            self.cfg = yaml.safe_load(f)
+    def __init__(self, cfg):
+        self.cfg = cfg
 
         self.dataset_train = None
         self.dataset_val = None

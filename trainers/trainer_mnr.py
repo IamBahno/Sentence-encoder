@@ -35,13 +35,18 @@ class Trainer:
         emb_anchors = all_embeddings[:self.batch_size]
         emb_anchor_pairs = all_embeddings[self.batch_size:]
 
-        # Compute cosine similarity:
-        cos_sim = torch.nn.CosineSimilarity()
-        cos_sim_scores = []
-        for emb_anchor in emb_anchors:
-            cos_sim_scores.append(cos_sim(emb_anchor, emb_anchor_pairs))
 
-        cos_sim_scores = torch.stack(cos_sim_scores)
+        # NEW cosine similarity
+        cos_sim = torch.nn.CosineSimilarity(dim=-1)
+        # Expand emb_anchor_pairs to [1, batch_size, 768] for broadcasting over batch_size
+        pairs_expanded = emb_anchor_pairs.unsqueeze(0)  # [1, batch_size, 768]
+
+        # Expand emb_anchors to [batch_size, 1, 768] for broadcasting over batch_size pairs
+        anchors_expanded = emb_anchors.unsqueeze(1)    # [batch_size, batch_size, 768]
+        # Compute cosine similarity over last dim → result shape: [batch_size, batch_size]
+        cos_sim_scores = cos_sim(anchors_expanded, pairs_expanded)
+
+
         return cos_sim_scores
 
     def train(self,epochs):
