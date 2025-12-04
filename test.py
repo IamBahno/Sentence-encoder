@@ -3,15 +3,23 @@ import torch
 import numpy as np
 import mteb
 import yaml
+import argparse
 
-with open("config.yaml") as f:
-    cfg = yaml.safe_load(f)
+# with open("config.yaml") as f:
+#     cfg = yaml.safe_load(f)
 
 from mteb.types import PromptType,BatchedInput
 from mteb.abstasks.task_metadata import TaskMetadata
 from transformers import BertTokenizer
 
-from models import BertSentenceEmbedder, SimpleClassifier, PairClassNLI
+from models.bert_sentence_embedder import BertSentenceEmbedder
+
+
+def load_config(config_path):
+    """Load YAML config from given path."""
+    with open(config_path) as f:
+        return yaml.safe_load(f)
+
 
 # MTEB expects model with 'encode' method, that takes in list of sentences, and returns numpy embeddings
 class BenchmarkEncoder:
@@ -58,9 +66,16 @@ class BenchmarkEncoder:
         return torch.cat(all_embeddings,dim=0).cpu()
 
 
+parser = argparse.ArgumentParser(description="Training script with configurable YAML")
+parser.add_argument("--config", default="config.yaml", 
+                    help="Path to config YAML file (default: config.yaml)")
+args = parser.parse_args()
+
+cfg = load_config(args.config)  # Load from CLI arg or default
+
 if __name__ == "__main__":
-    model = BertSentenceEmbedder(pooling=cfg["embedder"]["pooling"])
-    model_path = os.path.join("runs", cfg["run_name"], "last_model.pt")
+    model = BertSentenceEmbedder(pooling=cfg["embedder"]["pooling"],cfg=cfg)
+    model_path = os.path.join("runs", cfg["run_name"], "best_model.pt")
     model.load_state_dict(torch.load(model_path,weights_only=True))
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
     

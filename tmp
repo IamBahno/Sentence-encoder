@@ -1,0 +1,15 @@
+# mamba env create --prefix /auto/brno2/home/xbahou00/zpja_env -f Sentence-encoder/environment.yaml -y
+
+
+
+qsub -I -l select=1:ncpus=1:ngpus=1:mem=16gb -l walltime=2:00:00
+mamba create --prefix  /auto/brno2/home/xbahou00/zpja_env python=3.11.8 -y
+
+mamba install -c pytorch -c nvidia -c conda-forge pytorch -y
+pip install mteb datasets==4.2.0 transformers==4.54.0 matplotlib
+
+
+
+in job:
+module add mambaforge
+mamba activate /storage/brno2/home/xbahou00/zpja_env

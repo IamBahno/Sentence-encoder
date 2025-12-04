@@ -1,0 +1,26 @@
+{
+  "dataset_revision": "cf7172d4b730a743570f25291d04abeee086c824",
+  "task_name": "HUMESICK-R",
+  "mteb_version": "2.1.0",
+  "scores": {
+    "test": [
+      {
+        "pearson": 0.886256,
+        "spearman": 0.940022,
+        "cosine_pearson": 0.886256,
+        "cosine_spearman": 0.940022,
+        "manhattan_pearson": 0.90572,
+        "manhattan_spearman": 0.921611,
+        "euclidean_pearson": 0.909118,
+        "euclidean_spearman": 0.923396,
+        "main_score": 0.940022,
+        "hf_subset": "default",
+        "languages": [
+          "eng-Latn"
+        ]
+      }
+    ]
+  },
+  "evaluation_time": 1.660116195678711,
+  "kg_co2_emissions": null
+}

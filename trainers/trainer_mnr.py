@@ -23,25 +23,29 @@ class Trainer:
         os.makedirs(self.target_folder, exist_ok=True)
 
     def forward_pass(self, enc_anchors, enc_candidates):
-        # Extract input_ids and attention_mask for each and move to device
+        current_batch_size = enc_anchors["input_ids"].shape[0]
+
         input_ids_anchor, attn_anchor = enc_anchors["input_ids"], enc_anchors["attention_mask"]
         input_ids_anchor_pairs, attn_anchor_pairs = enc_candidates["input_ids"], enc_candidates["attention_mask"]
-        # Concatenate input ids and attentions to compute embeddings in one forward pass:
+        
+        # Concatenate
         all_input_ids = torch.cat([input_ids_anchor, input_ids_anchor_pairs], dim=0).to(self.device)
         all_attention_mask = torch.cat([attn_anchor, attn_anchor_pairs], dim=0).to(self.device)
-        # get anchor and anchor_pairs embeddings:
+        
+        # Forward pass
         all_embeddings = self.model(all_input_ids, all_attention_mask)
-        # Split back:
-        emb_anchors = all_embeddings[:self.batch_size]
-        emb_anchor_pairs = all_embeddings[self.batch_size:]
+        
+        # Split back using current_batch_size
+        emb_anchors = all_embeddings[:current_batch_size]
+        emb_anchor_pairs = all_embeddings[current_batch_size:]
 
-        # Compute cosine similarity:
-        cos_sim = torch.nn.CosineSimilarity()
-        cos_sim_scores = []
-        for emb_anchor in emb_anchors:
-            cos_sim_scores.append(cos_sim(emb_anchor, emb_anchor_pairs))
+        emb_anchors = torch.nn.functional.normalize(emb_anchors, p=2, dim=1)
+        emb_anchor_pairs = torch.nn.functional.normalize(emb_anchor_pairs, p=2, dim=1)
+        
+        cos_sim_scores = torch.mm(emb_anchors, emb_anchor_pairs.transpose(0, 1))
 
-        cos_sim_scores = torch.stack(cos_sim_scores)
+        cos_sim_scores = cos_sim_scores * 20.0 # temperature scaling to make the prob distribution sharper
+
         return cos_sim_scores
 
     def train(self,epochs):
