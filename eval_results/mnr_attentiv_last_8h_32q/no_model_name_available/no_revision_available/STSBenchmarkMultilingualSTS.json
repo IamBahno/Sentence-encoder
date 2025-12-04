@@ -1,0 +1,43 @@
+{
+  "dataset_revision": "29afa2569dcedaaa2fe6a3dcfebab33d28b82e8c",
+  "task_name": "STSBenchmarkMultilingualSTS",
+  "mteb_version": "2.1.0",
+  "scores": {
+    "dev": [
+      {
+        "pearson": 0.813421,
+        "spearman": 0.820965,
+        "cosine_pearson": 0.813421,
+        "cosine_spearman": 0.820965,
+        "manhattan_pearson": 0.762941,
+        "manhattan_spearman": 0.765457,
+        "euclidean_pearson": 0.762874,
+        "euclidean_spearman": 0.765495,
+        "main_score": 0.820965,
+        "hf_subset": "en",
+        "languages": [
+          "eng-Latn"
+        ]
+      }
+    ],
+    "test": [
+      {
+        "pearson": 0.786723,
+        "spearman": 0.791681,
+        "cosine_pearson": 0.786723,
+        "cosine_spearman": 0.791682,
+        "manhattan_pearson": 0.749083,
+        "manhattan_spearman": 0.742304,
+        "euclidean_pearson": 0.749219,
+        "euclidean_spearman": 0.742561,
+        "main_score": 0.791682,
+        "hf_subset": "en",
+        "languages": [
+          "eng-Latn"
+        ]
+      }
+    ]
+  },
+  "evaluation_time": 2.8289008140563965,
+  "kg_co2_emissions": null
+}

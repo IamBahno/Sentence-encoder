@@ -10,6 +10,7 @@ from models.pair_class_nli import SimpleClassifier, PairClassNLI
 from trainers.trainer_pair_class import Trainer
 
 from dataloader import nli_pair_class_collate_fn as nli_collate_fn
+from train_scripts.optimizer import init_optimizer
 
 
 def train_pair_class(cfg):
@@ -26,7 +27,7 @@ def train_pair_class(cfg):
     val_loader = DataLoader(dataset["dev"], batch_size=cfg["training"]["batch_size"], shuffle=False, collate_fn=partial(nli_collate_fn,tokenizer=tokenizer),drop_last=True)
 
     model = PairClassNLI(BertSentenceEmbedder(pooling=cfg["embedder"]["pooling"]), SimpleClassifier(input_dim=3*768, output_dim=3)).to(device) 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=float(cfg["training"]["learning_rate"]))
+    optimizer = init_optimizer(model,cfg)
 
     trainer = Trainer(model, train_loader, val_loader, loss_fn, optimizer, device, cfg["training"]["batch_size"], run_name=cfg["run_name"])
     trainer.train(cfg["training"]["epochs"])

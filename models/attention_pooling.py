@@ -21,7 +21,7 @@ class LastLayerAttentionPooling(nn.Module):
 
         assert hidden_size % num_heads == 0
 
-        # Learned queries: [heads, Q, d]
+        # Learned queries: [heads, Q_per_head, d]
         self.query = nn.Parameter(
             torch.randn(num_heads, num_queries_per_head, self.head_dim)
         )
@@ -51,7 +51,7 @@ class LastLayerAttentionPooling(nn.Module):
         K = K.view(B, L, self.num_heads, self.head_dim).transpose(1, 2)
         V = V.view(B, L, self.num_heads, self.head_dim).transpose(1, 2)
 
-        # Expand Q: [B, heads, Q, d]
+        # Expand Q: [B, heads, Q_ph, d] (it will like stack the same tensor Q batch times)
         Q = self.query.unsqueeze(0).expand(B, -1, -1, -1)
 
         # Attention: [B, heads, Q, L]
@@ -66,7 +66,7 @@ class LastLayerAttentionPooling(nn.Module):
         # Weighted sum: [B, heads, Q, d]
         pooled = torch.matmul(attn_weights, V)
 
-        # Flatten: [B, heads * Q * d] = [B, H * Q]
+        # Flatten
         pooled = pooled.reshape(B, H * self.num_queries_per_head)
         # Final output
         return self.mlp(pooled)

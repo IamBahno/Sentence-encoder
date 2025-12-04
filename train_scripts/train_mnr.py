@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from models.bert_sentence_embedder import BertSentenceEmbedder
 from trainers.trainer_mnr import Trainer
 from dataloader import mnr_collate_fn as nli_collate_fn
+from train_scripts.optimizer import init_optimizer
 
 def train_mnr(cfg):
     dataset_train, dataset_val = SnliMnliPreprocessor(cfg).preprocess()
@@ -21,7 +22,7 @@ def train_mnr(cfg):
     val_loader = DataLoader(dataset_val, batch_size=cfg["training"]["batch_size"], shuffle=False, collate_fn=partial(nli_collate_fn,tokenizer=tokenizer),drop_last=True)
    
     model = BertSentenceEmbedder(pooling=cfg["embedder"]["pooling"],cfg=cfg).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=float(cfg["training"]["learning_rate"]))
+    optimizer = init_optimizer(model,cfg)
     
     trainer = Trainer(model, train_loader, val_loader, loss_fn, optimizer, device, cfg["training"]["batch_size"], run_name=cfg["run_name"])
     trainer.train(cfg["training"]["epochs"])
