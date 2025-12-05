@@ -73,9 +73,46 @@ class LastLayerAttentionPooling(nn.Module):
 
 
 class MultiLayerAttentionPooling(nn.Module):
-    def __init__(self):
+    """
+    Expands the pooler to use a weighted average of specific BERT layers.
+    It first projects individual layer outputs into one vector (per sample in batch) and then 
+    applies the attention pooling on this vector
+    """
+    def __init__(self, hidden_size=768, last_n_layers=4):
         super().__init__()
-        pass
+        self.layer_indices = [-(i + 1) for i in range(last_n_layers)] # makes list of [-1,-2,...,-n]
+        self.layer_indices = self.layer_indices
+        self.num_layers = len(self.layer_indices)
+        
+        # Learnable Weights for layer mixing - one weight per layer
+        self.layer_weights = nn.Parameter(torch.ones(self.num_layers))
+        # Single layer pooler:
+        self.pooler = LastLayerAttentionPooling(hidden_size=hidden_size)
 
-    def forward(self,hidden_outputs,attention_mask):
-        return hidden_outputs
+    def forward(self, all_hidden_states, attention_mask):
+        """
+        all_hidden_states: Tuple of tensors from BERT
+                           Each tensor is [B, L, H]
+        attention_mask:    [B, L]
+        """
+
+        # Stack last n layers
+        # Select layers (e.g., last 4)
+        # Result shape: [B, num_selected_layers, L, H]
+        selected_layers = [all_hidden_states[i] for i in self.layer_indices]
+        stacked_layers = torch.stack(selected_layers, dim=1)
+        
+        # Calculate layer weights
+        norm_weights = F.softmax(self.layer_weights, dim=0) # normalization of weights so they sum up to 1
+        
+        # This allows us to multiply across Batch, L, and H dimensions automatically
+        norm_weights = norm_weights.view(1, self.num_layers, 1, 1)
+        
+        # Weighted sum - squash the "layer" dimension:
+        # [B, Layers, L, H] * [1, Layers, 1, 1] -> Sum over Layers -> [B, L, H]
+        combined_embedding = (stacked_layers * norm_weights).sum(dim=1)
+        
+        # Apply the single layer pooler 
+        final_embedding = self.pooler(combined_embedding, attention_mask)
+        
+        return final_embedding
