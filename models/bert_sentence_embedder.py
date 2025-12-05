@@ -13,7 +13,8 @@ class BertSentenceEmbedder(nn.Module):
             self.pooling_layer = LastLayerAttentionPooling(num_heads=cfg["heads"],num_queries_per_head=cfg["queries_per_head"])
         elif pooling == "attention_multi_layer":
             self.bert = BertModel.from_pretrained(model_name,output_hidden_states=True)
-            self.pooling_layer = MultiLayerAttentionPooling()
+            self.single_layer_pooling = LastLayerAttentionPooling(num_heads=cfg["heads"],num_queries_per_head=cfg["queries_per_head"])
+            self.pooling_layer = MultiLayerAttentionPooling(last_n_layers=cfg["multi_layer_pooling"]["last_n_layers"])
 
 
     def forward(self, input_ids, attention_mask):

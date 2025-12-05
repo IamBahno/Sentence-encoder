@@ -11,7 +11,7 @@ class LastLayerAttentionPooling(nn.Module):
         K,V: projections from token embeddings
         Output: single pooled embedding [B, H]
     """
-    def __init__(self, hidden_size=768, num_heads=8, num_queries_per_head=32):
+    def __init__(self, hidden_size=768, num_heads=8, num_queries_per_head=4):
         super().__init__()
 
         self.hidden_size = hidden_size
@@ -78,7 +78,7 @@ class MultiLayerAttentionPooling(nn.Module):
     It first projects individual layer outputs into one vector (per sample in batch) and then 
     applies the attention pooling on this vector
     """
-    def __init__(self, hidden_size=768, last_n_layers=4):
+    def __init__(self, single_layer_pooler: LastLayerAttentionPooling, last_n_layers=4):
         super().__init__()
         self.layer_indices = [-(i + 1) for i in range(last_n_layers)] # makes list of [-1,-2,...,-n]
         self.layer_indices = self.layer_indices
@@ -87,7 +87,7 @@ class MultiLayerAttentionPooling(nn.Module):
         # Learnable Weights for layer mixing - one weight per layer
         self.layer_weights = nn.Parameter(torch.ones(self.num_layers))
         # Single layer pooler:
-        self.pooler = LastLayerAttentionPooling(hidden_size=hidden_size)
+        self.pooler = single_layer_pooler
 
     def forward(self, all_hidden_states, attention_mask):
         """
