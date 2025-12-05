@@ -1,27 +1,16 @@
 import os
 import torch
-import numpy as np
 import mteb
 import yaml
 import argparse
 
-# with open("config.yaml") as f:
-#     cfg = yaml.safe_load(f)
-
-from mteb.types import PromptType,BatchedInput
+from mteb.types import PromptType
 from mteb.abstasks.task_metadata import TaskMetadata
 from transformers import BertTokenizer
-
+from pathlib import Path
 from models.bert_sentence_embedder import BertSentenceEmbedder
 
 
-def load_config(config_path):
-    """Load YAML config from given path."""
-    with open(config_path) as f:
-        return yaml.safe_load(f)
-
-
-# MTEB expects model with 'encode' method, that takes in list of sentences, and returns numpy embeddings
 class BenchmarkEncoder:
     def __init__(self, model, tokenizer, device="cuda" if torch.cuda.is_available() else "cpu"):
         self.model = model.to(device)
@@ -65,26 +54,68 @@ class BenchmarkEncoder:
 
         return torch.cat(all_embeddings,dim=0).cpu()
 
+def load_config(path):
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
 
-parser = argparse.ArgumentParser(description="Training script with configurable YAML")
-parser.add_argument("--config", default="config.yaml", 
-                    help="Path to config YAML file (default: config.yaml)")
-args = parser.parse_args()
+def find_and_evaluate_all(cfg):
+    """
+    Function used to find all trained model weights files in a specified directory
+    and evaluate using mteb. 
+    """
+    
+    models_root = cfg.get("models_root")
+    task_list = cfg.get("tasks")
+    
+    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+    tasks = mteb.get_tasks(task_types=task_list, languages=['eng'])
 
-cfg = load_config(args.config)  # Load from CLI arg or default
+    model_files = list(Path(models_root).rglob("best_model.pt"))
+    
+    if not model_files:
+        print("No models found.")
+        return
+
+    print(f"Found {len(model_files)} models. Starting evaluation...\n")
+
+    for model_path in model_files:
+        model_dir = model_path.parent
+        model_name = model_dir.name
+        model_config_path = model_dir / "local_config.yaml"
+        
+        if not model_config_path.exists():
+            print(f"No config.yaml found in {model_dir}")
+            continue
+
+        try:
+            model_cfg = load_config(model_config_path)
+            pooling_mode = model_cfg.get("embedder").get("pooling")
+            # num_atten_heads = model_cfg.get("attn_heads")
+            # ...
+
+            model = BertSentenceEmbedder(pooling=pooling_mode)
+            model.load_state_dict(torch.load(str(model_path), weights_only=True))
+            
+            wrapped = BenchmarkEncoder(model, tokenizer)            
+            
+            output_dir = os.path.join(cfg.get("output_folder", "mteb_results"), model_name)
+            evaluation = mteb.MTEB(tasks=tasks)
+            evaluation.run(wrapped, output_folder=output_dir)
+            
+        except Exception as e:
+            print(f"FAILED: {e}\n")
+            continue
+        
+        # clean:
+        del model
+        torch.cuda.empty_cache()
 
 if __name__ == "__main__":
-    model = BertSentenceEmbedder(pooling=cfg["embedder"]["pooling"],cfg=cfg)
-    model_path = os.path.join("runs", cfg["run_name"], "best_model.pt")
-    model.load_state_dict(torch.load(model_path,weights_only=True))
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    
-    wrapped = BenchmarkEncoder(model, tokenizer)
+    parser = argparse.ArgumentParser(description="MTEB Evaluation script")
+    parser.add_argument("--config", default="config.yaml", 
+                        help="Path to config YAML (default: config.yaml)")
+    args = parser.parse_args()
+    cfg = load_config(args.config)
 
-    # task_types=["Clustering", "Retrieval"]
-    # tasks = mteb.get_tasks(tasks=["STS16"])
-    # tasks = mteb.get_tasks(task_types=["Clustering", "Classification","Reranking","Retrieval","STS","Sumarization"],languages=['eng'])
-    # tasks = mteb.get_tasks(task_types=["Clustering", "Classification","STS",],languages=['eng'])
-    tasks = mteb.get_tasks(task_types=['STS'],languages=['eng'])
-    evaluation = mteb.MTEB(tasks=tasks)
-    results = evaluation.run(wrapped, output_folder=cfg["run_name"])
+    find_and_evaluate_all(cfg)
+    print("All done.")

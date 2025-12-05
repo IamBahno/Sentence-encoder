@@ -1,0 +1,6 @@
+embedder:
+  pooling: "max"
+
+heads: 8
+queries_per_head: 8
+
