@@ -68,7 +68,7 @@ def find_and_evaluate_all(cfg):
     task_list = cfg.get("tasks")
     
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    tasks = mteb.get_tasks(task_types=task_list, languages=['eng'])
+    tasks = mteb.get_tasks(tasks=task_list, languages=['eng'])
 
     model_files = list(Path(models_root).rglob("best_model.pt"))
     
