@@ -90,10 +90,8 @@ def find_and_evaluate_all(cfg):
         try:
             model_cfg = load_config(model_config_path)
             pooling_mode = model_cfg.get("embedder").get("pooling")
-            # num_atten_heads = model_cfg.get("attn_heads")
-            # ...
 
-            model = BertSentenceEmbedder(pooling=pooling_mode)
+            model = BertSentenceEmbedder(pooling=pooling_mode, cfg=model_cfg)
             model.load_state_dict(torch.load(str(model_path), weights_only=True))
             
             wrapped = BenchmarkEncoder(model, tokenizer)            
