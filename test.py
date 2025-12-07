@@ -12,23 +12,24 @@ from models.bert_sentence_embedder import BertSentenceEmbedder
 
 
 class BenchmarkEncoder:
-    def __init__(self, model, tokenizer, device="cuda" if torch.cuda.is_available() else "cpu"):
+    def __init__(self, model, tokenizer, cfg, device="cuda" if torch.cuda.is_available() else "cpu"):
         self.model = model.to(device)
         self.tokenizer = tokenizer
         self.device = device
+        self.cfg = cfg
+        self.batch_size = self.cfg["training"]["batch_size"]
         self.model.eval()
 
     @torch.no_grad()
     def encode(
         self,
-        inputs, # DataLoader[BatchedInput]
-        task_metadata: TaskMetadata,
-        hf_split: str,
-        hf_subset: str,
-        prompt_type: PromptType | None = None,
-        **kwargs,
-    ):
-    
+        inputs,
+        task_metadata=None,
+        hf_split=None,
+        hf_subset=None,
+        prompt_type=None,
+        **kwargs):
+        
         """Encodes the given sentences using the encoder.
 
         Args:
@@ -42,7 +43,6 @@ class BenchmarkEncoder:
         Returns:
             The encoded sentences.
         """
-        batch_size = kwargs['batch_size']
         
         all_embeddings = []
 
@@ -55,27 +55,21 @@ class BenchmarkEncoder:
         return torch.cat(all_embeddings,dim=0).cpu()
     
     @torch.no_grad()
-    def encode_queries(self, queries, batch_size=32, **kwargs):
+    def encode_queries(self, queries, **kwargs):
         """
         Encodes a list of query strings.
         MTEB calls this method for Retrieval tasks.
         """
         # Create batches of queries
         batched_inputs = []
-        for i in range(0, len(queries), batch_size):
-            batch_text = queries[i : i + batch_size]
+        for i in range(0, len(queries), self.batch_size):
+            batch_text = queries[i : i + self.batch_size]
             batched_inputs.append({"text": batch_text})
 
-        return self.encode(
-            inputs=batched_inputs,
-            task_metadata=None, 
-            hf_split="test",
-            hf_subset="default",
-            batch_size=batch_size,
-            **kwargs)
+        return self.encode(inputs=batched_inputs)
 
     @torch.no_grad()
-    def encode_corpus(self, corpus, batch_size=32, **kwargs):
+    def encode_corpus(self, corpus, **kwargs):
         """
         Encodes a list of corpus documents.
         MTEB calls this method for Retrieval tasks.
@@ -91,17 +85,11 @@ class BenchmarkEncoder:
 
         # Create batches
         batched_inputs = []
-        for i in range(0, len(sentences), batch_size):
-            batch_text = sentences[i : i + batch_size]
+        for i in range(0, len(sentences), self.batch_size):
+            batch_text = sentences[i : i + self.batch_size]
             batched_inputs.append({"text": batch_text})
 
-        return self.encode(
-            inputs=batched_inputs,
-            task_metadata=None,
-            hf_split="test",
-            hf_subset="default",
-            batch_size=batch_size,
-            **kwargs)
+        return self.encode(inputs=batched_inputs)
 
 def load_config(path):
     with open(path, "r") as f:
@@ -144,7 +132,7 @@ def find_and_evaluate_all(cfg):
             model = BertSentenceEmbedder(pooling=pooling_mode, cfg=model_cfg)
             model.load_state_dict(torch.load(str(model_path), weights_only=True))
             
-            wrapped = BenchmarkEncoder(model, tokenizer)            
+            wrapped = BenchmarkEncoder(model, tokenizer, cfg)            
             
             output_dir = os.path.join(cfg.get("output_folder", "mteb_results"), model_name)
             evaluation = mteb.MTEB(tasks=tasks)
