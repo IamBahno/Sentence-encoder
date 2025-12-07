@@ -4,3 +4,5 @@ embedder:
 heads: 8
 queries_per_head: 8
 
+multi_layer_pooling:
+  last_n_layers: 10
